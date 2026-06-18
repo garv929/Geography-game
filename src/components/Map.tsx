@@ -277,9 +277,7 @@ export default function Map({
                     onCountryClick(id);
                   }
                 }}
-              >
-                <title>{name}</title>
-              </path>
+              />
             );
           })}
         </g>

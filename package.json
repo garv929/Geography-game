@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "postbuild": "node scripts/make-clickable-build.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
