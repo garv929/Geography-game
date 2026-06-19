@@ -152,7 +152,6 @@ export const useGameState = () => {
     setFindAttempts(0);
     setRevealPendingId(null);
     setFindMessage('Click the highlighted country on the map.');
-    setCountryStatuses({});
   }, [clearPendingTimeout]);
 
   const handleFindGuess = useCallback(
@@ -170,11 +169,12 @@ export const useGameState = () => {
 
       if (countryId === currentCountry.id) {
         const points = findAttempts === 0 ? 2 : 1;
+        const status: CountryStatus = points === 2 ? 'correct' : 'partial';
         setScore((value) => value + points);
         setStreak((value) => value + 1);
         recordAttempt(currentCountry, points);
         setFindMessage(points === 2 ? '+2 points. Nice find!' : '+1 point. Good recovery!');
-        setCountryStatuses({ [countryId]: 'correct' });
+        setCountryStatuses((current) => ({ ...current, [countryId]: status }));
         timeoutRef.current = window.setTimeout(advanceFind, 700);
         return;
       }
@@ -189,12 +189,9 @@ export const useGameState = () => {
 
       setStreak(0);
       recordAttempt(currentCountry, 0);
-      setFindMessage(`That was ${currentCountry.name}. Click it to continue.`);
-      setRevealPendingId(currentCountry.id);
-      setCountryStatuses({
-        [countryId]: 'wrong',
-        [currentCountry.id]: 'revealed',
-      });
+      setFindMessage(`That was ${currentCountry.name}. Moving to the next country.`);
+      setCountryStatuses((current) => ({ ...current, [currentCountry.id]: 'missed' }));
+      timeoutRef.current = window.setTimeout(advanceFind, 1200);
     },
     [
       activeIds,

@@ -246,11 +246,13 @@ export default function Map({
           {countryPaths.map(({ country, id, path }) => {
             const metadata = COUNTRY_BY_ID.get(id);
             const isActive = activeIds.has(id);
+            const status = countryStatuses[id];
+            const isCompleted = status !== undefined;
             const isClickable =
               Boolean(metadata) &&
               isActive &&
-              (mode === 'find' || countryStatuses[id] === undefined);
-            const status = countryStatuses[id];
+              !isCompleted &&
+              (mode === 'find' || status === undefined);
             const name = metadata?.name ?? country.properties?.name ?? id;
 
             return (
