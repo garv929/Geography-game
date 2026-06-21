@@ -5,7 +5,9 @@ import type { Feature, FeatureCollection, Geometry } from 'geojson';
 import { COUNTRY_BY_ID } from '../data/countries';
 import type { CountryStatus, GameMode } from '../hooks/useGameState';
 
-const ATLAS_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
+// 50m resolution: far better coastline/island detail than 110m while staying
+// ~10x smaller than 10m (which would be ~25 MB and risk initial-render lag).
+const ATLAS_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json';
 
 type AtlasTopology = {
   objects: {
@@ -135,6 +137,7 @@ export default function Map({
   const svgRef = useRef<SVGSVGElement | null>(null);
   const groupRef = useRef<SVGGElement | null>(null);
   const [features, setFeatures] = useState<CountryFeature[]>([]);
+  const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const { ref: wrapperRef, size } = useElementSize<HTMLDivElement>();
 
@@ -157,11 +160,13 @@ export default function Map({
         if (!cancelled) {
           const nextFeatures = countries.features as CountryFeature[];
           setFeatures(nextFeatures);
+          setLoading(false);
           onFeaturesLoaded(nextFeatures);
         }
       })
       .catch((error: Error) => {
         if (!cancelled) {
+          setLoading(false);
           setLoadError(error.message);
         }
       });
@@ -193,7 +198,9 @@ export default function Map({
   }, [activeIds, features, size.height, size.width]);
 
   const countryPaths = useMemo(() => {
-    const path = d3.geoPath(projection);
+    // digits(3) trims coordinate strings to 3 decimal places — negligible
+    // visual impact but meaningfully shorter SVG path strings for 50m data.
+    const path = d3.geoPath(projection).digits(3);
     return features.map((country) => ({
       country,
       id: getFeatureId(country),
@@ -232,6 +239,11 @@ export default function Map({
       {loadError ? (
         <div className="absolute inset-0 grid place-items-center p-8 text-center text-red-200">
           Could not load world map: {loadError}
+        </div>
+      ) : null}
+      {loading ? (
+        <div className="pointer-events-none absolute inset-0 grid place-items-center">
+          <span className="text-sm text-slate-400">Loading map…</span>
         </div>
       ) : null}
       <svg
